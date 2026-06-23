@@ -1,40 +1,65 @@
 import { db } from '../config/database';
-import { generateInspectionNumber } from '../utils/generators';
+import { activityLogRepository } from '../repositories/activityLog.repository';
+import { productionOrderRepository } from '../repositories/productionOrder.repository';
 import { NotFoundError } from '../utils/AppError';
-import { FabricQualityInspection } from '../models/types';
+import { generateInspectionNumber } from '../utils/opNumberGenerator';
+import { z } from 'zod';
+import { FabricQualityInspectionSchema } from '../validators/schemas';
 
 export const fabricQualityService = {
-  async list(status?: string) {
-    if (status) {
-      const { rows } = await db.query<FabricQualityInspection>('SELECT * FROM fabric_quality_inspections WHERE status=$1 ORDER BY created_at DESC', [status]);
-      return rows;
-    }
-    const { rows } = await db.query<FabricQualityInspection>('SELECT * FROM fabric_quality_inspections ORDER BY created_at DESC');
+  async getAll(status?: string) {
+    const params: any[] = [];
+    let where = '1=1';
+    if (status) { where = 'status = $1'; params.push(status); }
+    const { rows } = await db.query(`SELECT * FROM fabric_quality_inspections WHERE ${where} ORDER BY created_at DESC`, params);
     return rows;
   },
-  async create(data: Partial<FabricQualityInspection>) {
+
+  async getById(id: string) {
+    const { rows } = await db.query('SELECT * FROM fabric_quality_inspections WHERE id = $1', [id]);
+    if (!rows[0]) throw new NotFoundError('Inspeção');
+    return rows[0];
+  },
+
+  async create(input: z.infer<typeof FabricQualityInspectionSchema>) {
     const inspectionNumber = await generateInspectionNumber();
-    const { rows } = await db.query<FabricQualityInspection>(
-      `INSERT INTO fabric_quality_inspections (inspection_number,item_description,weight,destination_sector,observations,defect_image_url,employee_name,inspection_date,priority,status)
+    const { rows } = await db.query(
+      `INSERT INTO fabric_quality_inspections
+        (inspection_number, item_description, weight, destination_sector, observations, defect_image_url, employee_name, inspection_date, priority, status)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
-      [inspectionNumber,data.item_description,data.weight,data.destination_sector,data.observations??null,data.defect_image_url??null,data.employee_name,data.inspection_date,data.priority??'normal',data.status??'pending']
+      [inspectionNumber, input.item_description, input.weight, input.destination_sector,
+       input.observations ?? null, input.defect_image_url ?? null, input.employee_name,
+       input.inspection_date, input.priority ?? 'normal', input.status ?? 'pending']
     );
     return rows[0];
   },
-  async update(id: string, data: Partial<FabricQualityInspection>) {
+
+  async update(id: string, input: Partial<z.infer<typeof FabricQualityInspectionSchema>>) {
+    const existing = await this.getById(id);
     const fields: string[] = [];
-    const values: any[] = [];
-    let idx = 1;
-    const allowed: (keyof FabricQualityInspection)[] = ['item_description','weight','destination_sector','observations','defect_image_url','employee_name','inspection_date','priority','status'];
+    const vals: any[] = [];
+    let i = 1;
+    const allowed = ['item_description','weight','destination_sector','observations','defect_image_url','employee_name','inspection_date','priority','status'];
     for (const key of allowed) {
-      if (data[key] !== undefined) { fields.push(`${key}=$${idx++}`); values.push(data[key]); }
+      if ((input as any)[key] !== undefined) { fields.push(`${key} = $${i++}`); vals.push((input as any)[key]); }
     }
-    if (!fields.length) return;
-    values.push(id);
-    await db.query(`UPDATE fabric_quality_inspections SET ${fields.join(',')} WHERE id=$${idx}`, values);
+    if (fields.length === 0) return existing;
+    vals.push(id);
+    const { rows } = await db.query(`UPDATE fabric_quality_inspections SET ${fields.join(', ')} WHERE id = $${i} RETURNING *`, vals);
+    return rows[0];
   },
+
   async delete(id: string) {
-    const { rowCount } = await db.query('DELETE FROM fabric_quality_inspections WHERE id=$1', [id]);
-    if (!rowCount) throw new NotFoundError('Inspe\u00e7\u00e3o');
+    const { rowCount } = await db.query('DELETE FROM fabric_quality_inspections WHERE id = $1', [id]);
+    if (!rowCount) throw new NotFoundError('Inspeção');
+  },
+
+  async completeQualityMalhas(poId: string, userId: string) {
+    const op = await productionOrderRepository.findById(poId);
+    if (!op) throw new NotFoundError('Ordem de produção');
+    await db.transaction(async (client) => {
+      await productionOrderRepository.updateStatus(poId, 'preparacao', 'qualidade_malhas', client);
+      await activityLogRepository.log({ op_id: poId, stage: 'qualidade_malhas', action: 'completed', user_id: userId }, client);
+    });
   },
 };
