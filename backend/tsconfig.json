@@ -11,9 +11,8 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "declarationMap": true,
     "sourceMap": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "migrations/**/*", "seeds/**/*"],
   "exclude": ["node_modules", "dist", "tests"]
 }
