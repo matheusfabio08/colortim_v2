@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: colortim_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: colortim
+      POSTGRES_PASSWORD: colortim
+      POSTGRES_DB: colortim
+    ports:
+      - '5432:5432'
+    volumes:
+      - colortim_pgdata:/var/lib/postgresql/data
+
+volumes:
+  colortim_pgdata:
