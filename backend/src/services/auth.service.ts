@@ -1,34 +1,58 @@
 import { userRepository } from '../repositories/user.repository';
-import { hashPassword, verifyPassword } from '../utils/password';
-import { signTokenPair, TokenPair } from '../utils/jwt';
-import { UnauthorizedError, BadRequestError, ConflictError } from '../utils/AppError';
-import { AuthenticatedUser } from '../models/types';
-
-export interface LoginResult {
-  user: AuthenticatedUser;
-  tokens: TokenPair;
-}
+import { verifyPassword } from '../utils/password';
+import { signTokenPair, verifyRefreshToken, JwtPayload } from '../utils/jwt';
+import { UnauthorizedError } from '../utils/AppError';
 
 export const authService = {
-  async login(username: string, password: string): Promise<LoginResult> {
-    if (!username || !password) throw new BadRequestError('Usuário e senha são obrigatórios');
+  async login(username: string, password: string) {
     const user = await userRepository.findByUsername(username);
-    if (!user || !user.is_active) throw new UnauthorizedError('Usuário ou senha inválidos');
+    if (!user || !user.is_active) throw new UnauthorizedError('Credenciais inválidas');
+
     const valid = await verifyPassword(password, user.password_hash);
-    if (!valid) throw new UnauthorizedError('Usuário ou senha inválidos');
-    const tokens = signTokenPair({ userId: user.id, username: user.username, role: user.role });
-    return { user: { id: user.id, username: user.username, name: user.name, email: user.email, role: user.role, is_active: user.is_active }, tokens };
+    if (!valid) throw new UnauthorizedError('Credenciais inválidas');
+
+    const payload: JwtPayload = { userId: user.id, username: user.username, role: user.role };
+    const tokens = signTokenPair(payload);
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+    await userRepository.storeRefreshToken(user.id, tokens.refreshToken, expiresAt);
+
+    return {
+      user: { id: user.id, username: user.username, name: user.name, email: user.email, role: user.role },
+      sessionToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
   },
-  async getMe(userId: string): Promise<AuthenticatedUser> {
-    const user = await userRepository.findActiveById(userId);
-    if (!user) throw new UnauthorizedError('Usuário não encontrado ou inativo');
-    return { id: user.id, username: user.username, name: user.name, email: user.email, role: user.role, is_active: user.is_active };
+
+  async refresh(refreshToken: string) {
+    const payload = verifyRefreshToken(refreshToken);
+    const stored = await userRepository.findRefreshToken(refreshToken);
+    if (!stored) throw new UnauthorizedError('Refresh token inválido');
+    if (new Date() > stored.expires_at) {
+      await userRepository.deleteRefreshToken(refreshToken);
+      throw new UnauthorizedError('Refresh token expirado');
+    }
+    const user = await userRepository.findById(stored.user_id);
+    if (!user || !user.is_active) throw new UnauthorizedError('Usuário inativo');
+
+    const newPayload: JwtPayload = { userId: user.id, username: user.username, role: user.role };
+    const tokens = signTokenPair(newPayload);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+    await userRepository.storeRefreshToken(user.id, tokens.refreshToken, expiresAt);
+    await userRepository.deleteRefreshToken(refreshToken);
+
+    return { sessionToken: tokens.accessToken, refreshToken: tokens.refreshToken };
   },
-  async createUser(data: { username: string; password: string; name: string; email: string; role: string }): Promise<{ id: string }> {
-    const exists = await userRepository.usernameExists(data.username);
-    if (exists) throw new ConflictError('Nome de usuário já existe');
-    const password_hash = await hashPassword(data.password);
-    const user = await userRepository.create({ ...data, password_hash });
-    return { id: user.id };
+
+  async logout(userId: string) {
+    await userRepository.deleteAllRefreshTokens(userId);
+  },
+
+  async me(userId: string) {
+    const user = await userRepository.findById(userId);
+    if (!user || !user.is_active) throw new UnauthorizedError('Usuário inativo');
+    return { id: user.id, username: user.username, name: user.name, email: user.email, role: user.role };
   },
 };

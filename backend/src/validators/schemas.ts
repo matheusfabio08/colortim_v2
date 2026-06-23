@@ -5,102 +5,93 @@ export const LoginSchema = z.object({
   password: z.string().min(1),
 });
 
-export const POItemSchema = z.object({
-  material: z.string().min(1),
-  quantity: z.number().optional(),
-  unit: z.string().optional(),
-  requires_lab: z.boolean().optional().default(false),
-  requires_fabric_quality: z.boolean().optional().default(false),
-});
-
-export const CreatePOSchema = z.object({
+export const CreateProductionOrderSchema = z.object({
   client: z.string().min(1),
   color: z.string().min(1),
   order_number: z.string().optional(),
+  description: z.string().optional(),
   entry_date: z.string().optional(),
   expected_date: z.string().optional(),
-  description: z.string().optional(),
-  items: z.array(POItemSchema).min(1),
-  region_jaragua: z.boolean().optional().default(false),
-  region_brusque: z.boolean().optional().default(false),
-  region_gaspar: z.boolean().optional().default(false),
-  fiber_id: z.string().uuid().nullable().optional(),
-  is_dual_fiber: z.boolean().optional().default(false),
-  fiber2_id: z.string().uuid().nullable().optional(),
+  requires_fabric_quality: z.boolean().default(false),
+  region_jaragua: z.boolean().default(false),
+  region_brusque: z.boolean().default(false),
+  region_gaspar: z.boolean().default(false),
+  fiber_id: z.string().uuid().optional(),
+  is_dual_fiber: z.boolean().default(false),
+  fiber2_id: z.string().uuid().optional(),
+  items: z.array(z.object({
+    material: z.string().min(1),
+    quantity: z.number().positive(),
+    unit: z.string().min(1),
+    requires_lab: z.boolean().default(false),
+    lot_meters: z.number().optional(),
+  })).min(1),
 });
 
 export const PreparationSchema = z.object({
   po_id: z.string().uuid(),
-  employee_meters: z.array(z.object({ employee_id: z.string(), meters: z.number() })),
-  splices: z.array(z.string()),
-  total_weight: z.number(),
-  destination_box: z.string(),
-  start_time: z.string(),
-  end_time: z.string(),
+  employee_id: z.string().uuid(),
+  machine_id: z.string().optional(),
+  notes: z.string().optional(),
+  timestamp: z.string(),
 });
 
 export const BatchPreparationSchema = z.object({
-  color: z.string(),
-  employee_meters: z.array(z.object({ employee_id: z.string(), meters: z.number() })),
-  splices: z.array(z.string()),
-  total_weight: z.number(),
-  destination_box: z.string(),
-  start_time: z.string(),
-  end_time: z.string(),
-  ops: z.array(z.object({ op_id: z.string().uuid(), meters: z.number() })),
+  op_ids: z.array(z.string().uuid()).min(1),
+  employee_id: z.string().uuid(),
+  notes: z.string().optional(),
+  timestamp: z.string(),
 });
 
 export const CreateLotsSchema = z.object({
-  parent_op_id: z.string().uuid(),
-  num_lots: z.number().int().min(1),
-  lot_meters: z.array(z.number()),
+  po_id: z.string().uuid(),
+  num_lots: z.number().int().positive(),
 });
 
 export const ProductionSchema = z.object({
   po_id: z.string().uuid(),
-  box_number: z.string(),
-  machine: z.string(),
-  operator: z.string(),
-  has_adjustment: z.boolean(),
-  start_date: z.string(),
-  end_date: z.string(),
-  meters_produced: z.number(),
+  employee_id: z.string().uuid(),
+  machine_id: z.string().optional(),
+  notes: z.string().optional(),
+  timestamp: z.string(),
+  weight: z.number().optional(),
 });
 
 export const DryerSchema = z.object({
   po_id: z.string().uuid(),
-  destination: z.string(),
+  employee_id: z.string().uuid(),
+  temperature: z.number().optional(),
+  notes: z.string().optional(),
+  timestamp: z.string(),
 });
 
 export const UntanglingSchema = z.object({
   po_id: z.string().uuid(),
-  num_employees: z.number(),
-  meters_per_employee: z.number(),
-  employee_times: z.array(z.string()),
-  start_time: z.string(),
-  end_time: z.string(),
+  employee_id: z.string().uuid(),
+  notes: z.string().optional(),
+  timestamp: z.string(),
 });
 
 export const RollingSchema = z.object({
   po_id: z.string().uuid(),
-  employee_ids: z.array(z.string()),
-  num_splices: z.number(),
-  num_rolls: z.number(),
-  issue_description: z.string().optional(),
-  start_time: z.string(),
-  end_time: z.string(),
+  employee_id: z.string().uuid(),
+  roll_count: z.number().int().optional(),
+  notes: z.string().optional(),
+  timestamp: z.string(),
 });
 
 export const QualitySchema = z.object({
   po_id: z.string().uuid(),
-  rolls_sent: z.number(),
-  meters_per_roll: z.number(),
-  discrepancy: z.string().optional(),
+  employee_id: z.string().uuid(),
+  approved: z.boolean(),
+  rejection_reason: z.string().optional(),
+  notes: z.string().optional(),
+  timestamp: z.string(),
 });
 
 export const LaboratorySchema = z.object({
   po_id: z.string().uuid(),
-  num_batches: z.number().optional(),
+  num_batches: z.number().int().positive().optional(),
   is_recipe_ready: z.boolean(),
   recipe_origin_date: z.string().optional(),
   description: z.string().optional(),
@@ -111,71 +102,30 @@ export const LaboratorySchema = z.object({
 
 export const BoxSchema = z.object({
   po_id: z.string().uuid(),
-  employee_id: z.string(),
-  has_adjustment: z.boolean(),
+  employee_id: z.string().uuid(),
+  has_adjustment: z.boolean().default(false),
   adjustment_details: z.string().optional(),
-  is_reprocess: z.boolean(),
+  is_reprocess: z.boolean().default(false),
   reprocess_reason: z.string().optional(),
   timestamp: z.string(),
 });
 
-export const PesagemSchema = z.object({
-  po_id: z.string().uuid(),
-  employee_id: z.string().uuid().optional(),
-  notes: z.string().optional(),
-  start_time: z.string().optional(),
-  end_time: z.string().optional(),
-});
-
-export const CreateEmployeeSchema = z.object({
-  name: z.string().min(1),
-  sector: z.string().min(1),
-});
-
 export const FabricQualityInspectionSchema = z.object({
   item_description: z.string().min(1),
-  weight: z.number(),
+  weight: z.number().positive(),
   destination_sector: z.string().min(1),
   observations: z.string().optional(),
   defect_image_url: z.string().optional(),
   employee_name: z.string().min(1),
   inspection_date: z.string(),
-  priority: z.enum(['normal', 'urgent']).optional().default('normal'),
-  status: z.enum(['pending', 'in_progress', 'completed']).optional().default('pending'),
+  priority: z.enum(['low', 'normal', 'high', 'urgent']).default('normal'),
+  status: z.enum(['pending', 'in_progress', 'completed', 'rejected']).default('pending'),
 });
 
 export const CreateUserSchema = z.object({
-  username: z.string().min(3),
+  username: z.string().min(3).max(50),
   password: z.string().min(6),
   name: z.string().min(1),
   email: z.string().email(),
   role: z.enum(['Admin','PCP','Almoxarifado','Preparacao','Producao','Laboratorio','Qualidade','Pesagem']),
-});
-
-export const UpdateUserSchema = z.object({
-  role: z.enum(['Admin','PCP','Almoxarifado','Preparacao','Producao','Laboratorio','Qualidade','Pesagem']).optional(),
-  is_active: z.boolean().optional(),
-  name: z.string().optional(),
-  email: z.string().email().optional(),
-});
-
-export const UpdatePrioritySchema = z.object({
-  priority: z.number().int().min(0).max(5),
-  priority_notes: z.string().optional(),
-});
-
-export const UpdateSequenceSchema = z.object({
-  orderedIds: z.array(z.string().uuid()),
-});
-
-export const ConfigItemSchema = z.object({
-  name: z.string().min(1),
-});
-
-export const ListaSaidaSchema = z.object({
-  op_id: z.string().uuid(),
-  exit_date: z.string(),
-  exit_time: z.string().optional(),
-  transportadora_id: z.string().uuid().optional(),
-  regiao_id: z.string().uuid().optional(),
 });
