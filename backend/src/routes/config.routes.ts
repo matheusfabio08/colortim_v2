@@ -1,0 +1,22 @@
+import { Router } from 'express';
+import { configController } from '../controllers/config.controller';
+import { authMiddleware } from '../middlewares/auth.middleware';
+
+const router = Router();
+router.use(authMiddleware);
+router.get('/fibras', configController.listFibras);
+router.post('/fibras', configController.createFibra);
+router.patch('/fibras/:id/toggle', configController.toggleFibra);
+router.delete('/fibras/:id', configController.deleteFibra);
+router.get('/regioes', configController.listRegioes);
+router.post('/regioes', configController.createRegiao);
+router.patch('/regioes/:id/toggle', configController.toggleRegiao);
+router.delete('/regioes/:id', configController.deleteRegiao);
+router.get('/transportadoras', configController.listTransportadoras);
+router.post('/transportadoras', configController.createTransportadora);
+router.patch('/transportadoras/:id/toggle', configController.toggleTransportadora);
+router.delete('/transportadoras/:id', configController.deleteTransportadora);
+router.get('/employees', configController.listEmployees);
+router.post('/employees', configController.createEmployee);
+router.delete('/employees/:id', configController.deleteEmployee);
+export { router as configRoutes };
