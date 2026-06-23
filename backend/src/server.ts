@@ -16,7 +16,7 @@ app.use(helmet());
 app.use(cors({
   origin: env.CORS_ORIGIN,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -36,16 +36,15 @@ app.use(errorHandler);
 async function bootstrap() {
   try {
     await checkDbConnection();
-    console.log('\u2705 Database connected');
+    console.log('✅ Database connected');
     app.listen(env.PORT, () => {
-      console.log(`\uD83D\uDE80 Server running on port ${env.PORT} [${env.NODE_ENV}]`);
+      console.log(`🚀 Server running on port ${env.PORT} [${env.NODE_ENV}]`);
     });
   } catch (error) {
-    console.error('\u274c Failed to start server:', error);
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 }
 
 bootstrap();
-
 export { app };

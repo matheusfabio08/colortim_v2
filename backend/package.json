@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Colortim Production Management System - Backend",
   "main": "dist/server.js",
-  "type": "commonjs",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
@@ -39,6 +38,7 @@
     "@types/node": "^20.11.5",
     "@types/pg": "^8.10.9",
     "@types/uuid": "^9.0.7",
+    "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
     "eslint": "^8.56.0",
@@ -48,12 +48,5 @@
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.3"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "roots": ["<rootDir>/tests"],
-    "testMatch": ["**/*.test.ts"],
-    "collectCoverageFrom": ["src/**/*.ts", "!src/server.ts"]
   }
 }
