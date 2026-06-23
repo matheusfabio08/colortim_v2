@@ -32,7 +32,7 @@ export function verifyAccessToken(token: string): JwtPayload {
   try {
     return jwt.verify(token, env.JWT_SECRET) as JwtPayload;
   } catch {
-    throw new UnauthorizedError('Token inválido ou expirado');
+    throw new UnauthorizedError('Token inv\u00e1lido ou expirado');
   }
 }
 
@@ -40,6 +40,6 @@ export function verifyRefreshToken(token: string): JwtPayload {
   try {
     return jwt.verify(token, env.JWT_REFRESH_SECRET) as JwtPayload;
   } catch {
-    throw new UnauthorizedError('Refresh token inválido ou expirado');
+    throw new UnauthorizedError('Refresh token inv\u00e1lido ou expirado');
   }
 }

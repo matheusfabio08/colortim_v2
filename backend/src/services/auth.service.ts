@@ -11,32 +11,17 @@ export interface LoginResult {
 
 export const authService = {
   async login(username: string, password: string): Promise<LoginResult> {
-    if (!username || !password) throw new BadRequestError('Usuário e senha são obrigatórios');
-
+    if (!username || !password) throw new BadRequestError('Usu\u00e1rio e senha s\u00e3o obrigat\u00f3rios');
     const user = await userRepository.findByUsername(username);
-    if (!user || !user.is_active) throw new UnauthorizedError('Usuário ou senha inválidos');
-
+    if (!user || !user.is_active) throw new UnauthorizedError('Usu\u00e1rio ou senha inv\u00e1lidos');
     const isValid = await verifyPassword(password, user.password_hash);
-    if (!isValid) throw new UnauthorizedError('Usuário ou senha inválidos');
-
+    if (!isValid) throw new UnauthorizedError('Usu\u00e1rio ou senha inv\u00e1lidos');
     const tokens = signTokenPair({ userId: user.id, username: user.username, role: user.role });
     return { user: { id: user.id, username: user.username, name: user.name, email: user.email, role: user.role, is_active: user.is_active }, tokens };
   },
-
   async getMe(userId: string): Promise<AuthenticatedUser> {
     const user = await userRepository.findActiveById(userId);
-    if (!user) throw new UnauthorizedError('Usuário não encontrado ou inativo');
+    if (!user) throw new UnauthorizedError('Usu\u00e1rio n\u00e3o encontrado ou inativo');
     return { id: user.id, username: user.username, name: user.name, email: user.email, role: user.role, is_active: user.is_active };
-  },
-
-  async createUser(data: { username: string; password: string; name: string; email: string; role: string }): Promise<{ id: string }> {
-    if (!data.username || !data.password || !data.name || !data.email || !data.role) {
-      throw new BadRequestError('Todos os campos são obrigatórios');
-    }
-    const exists = await userRepository.usernameExists(data.username);
-    if (exists) throw new ConflictError('Nome de usuário já existe');
-    const password_hash = await hashPassword(data.password);
-    const user = await userRepository.create({ ...data, password_hash });
-    return { id: user.id };
   },
 };

@@ -6,7 +6,7 @@ export const globalRateLimiter = rateLimit({
   max: env.RATE_LIMIT_MAX_REQUESTS,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Muitas requisições. Tente novamente mais tarde.' },
+  message: { error: 'Muitas requisi\u00e7\u00f5es. Tente novamente mais tarde.' },
 });
 
 export const loginRateLimiter = rateLimit({

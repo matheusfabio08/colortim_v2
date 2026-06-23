@@ -11,11 +11,7 @@ export function authMiddleware(req: AuthRequest, _res: Response, next: NextFunct
     const token =
       req.cookies?.colortim_access_token ||
       req.headers.authorization?.replace('Bearer ', '');
-
-    if (!token) {
-      throw new UnauthorizedError('Token de autenticação não fornecido');
-    }
-
+    if (!token) throw new UnauthorizedError('Token de autentica\u00e7\u00e3o n\u00e3o fornecido');
     const payload = verifyAccessToken(token);
     req.user = { ...payload, id: payload.userId };
     next();
