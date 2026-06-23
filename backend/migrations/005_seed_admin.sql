@@ -1,5 +1,5 @@
--- Senha: admin123 (bcrypt hash, rounds=12)
--- IMPORTANTE: Alterar a senha imediatamente após o primeiro login
+-- Admin user seed: password = "admin123" (bcrypt hash rounds=12)
+-- IMPORTANT: Change this password immediately after first login
 INSERT INTO users (id, username, password_hash, name, email, role, is_active)
 VALUES (
   gen_random_uuid(),

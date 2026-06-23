@@ -1,14 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TYPE user_role AS ENUM (
-  'Admin',
-  'PCP',
-  'Almoxarifado',
-  'Preparacao',
-  'Producao',
-  'Laboratorio',
-  'Qualidade',
-  'Pesagem'
+  'Admin','PCP','Almoxarifado','Preparacao','Producao','Laboratorio','Qualidade','Pesagem'
 );
 
 CREATE TABLE users (
