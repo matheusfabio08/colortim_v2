@@ -20,11 +20,7 @@ export const authService = {
     if (!isValid) throw new UnauthorizedError('Usuário ou senha inválidos');
 
     const tokens = signTokenPair({ userId: user.id, username: user.username, role: user.role });
-
-    return {
-      user: { id: user.id, username: user.username, name: user.name, email: user.email, role: user.role, is_active: user.is_active },
-      tokens,
-    };
+    return { user: { id: user.id, username: user.username, name: user.name, email: user.email, role: user.role, is_active: user.is_active }, tokens };
   },
 
   async getMe(userId: string): Promise<AuthenticatedUser> {
@@ -34,12 +30,11 @@ export const authService = {
   },
 
   async createUser(data: { username: string; password: string; name: string; email: string; role: string }): Promise<{ id: string }> {
-    if (!data.username || !data.password || !data.name || !data.email || !data.role)
+    if (!data.username || !data.password || !data.name || !data.email || !data.role) {
       throw new BadRequestError('Todos os campos são obrigatórios');
-
+    }
     const exists = await userRepository.usernameExists(data.username);
     if (exists) throw new ConflictError('Nome de usuário já existe');
-
     const password_hash = await hashPassword(data.password);
     const user = await userRepository.create({ ...data, password_hash });
     return { id: user.id };
