@@ -14,6 +14,6 @@ export const loginRateLimiter = rateLimit({
   max: env.LOGIN_RATE_LIMIT_MAX,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
+  message: { error: 'Muitas tentativas de login. Aguarde 15 minutos.' },
   skipSuccessfulRequests: true,
 });

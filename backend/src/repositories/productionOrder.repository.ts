@@ -1,79 +1,114 @@
-import { PoolClient } from 'pg';
 import { db } from '../config/database';
-import { ProductionOrder } from '../models/types';
-
-const STAGE_TABLES = ['po_preparation','po_production','po_dryer','po_untangling','po_rolling','po_quality','po_laboratory','po_pesagem','po_box_processing','po_in_progress','activity_log','lista_saida'];
+import { PoolClient } from 'pg';
+import { ProductionOrder, POStatus } from '../models/types';
 
 export const productionOrderRepository = {
-  async findAll(filters: { status?: string; search?: string; requires_lab?: boolean }): Promise<ProductionOrder[]> {
-    const conds: string[] = ['1=1'];
-    const params: any[] = [];
-    let idx = 1;
-    if (filters.status) { conds.push(`status=$${idx++}`); params.push(filters.status); }
-    if (filters.requires_lab) conds.push('requires_lab=TRUE');
-    if (filters.search) { conds.push(`(op_number ILIKE $${idx} OR client ILIKE $${idx} OR color ILIKE $${idx})`); params.push(`%${filters.search}%`); idx++; }
-    const { rows } = await db.query<ProductionOrder>(`SELECT * FROM production_orders WHERE ${conds.join(' AND ')} ORDER BY created_at DESC`, params);
-    return rows;
-  },
   async findById(id: string): Promise<ProductionOrder | null> {
-    const { rows } = await db.query<ProductionOrder>('SELECT * FROM production_orders WHERE id=$1', [id]);
+    const { rows } = await db.query<ProductionOrder>(
+      `SELECT po.*, ps.sheet_number, f.name AS fiber_name, f2.name AS fiber2_name
+       FROM production_orders po
+       JOIN production_sheets ps ON po.sheet_id = ps.id
+       LEFT JOIN fibras f  ON po.fiber_id  = f.id
+       LEFT JOIN fibras f2 ON po.fiber2_id = f2.id
+       WHERE po.id = $1`,
+      [id]
+    );
     return rows[0] ?? null;
   },
-  async findBySheetId(sheetId: string): Promise<ProductionOrder[]> {
-    const { rows } = await db.query<ProductionOrder>('SELECT * FROM production_orders WHERE sheet_id=$1 ORDER BY op_number', [sheetId]);
+
+  async findByOpNumber(opNumber: string): Promise<ProductionOrder | null> {
+    const { rows } = await db.query<ProductionOrder>(
+      'SELECT * FROM production_orders WHERE op_number = $1', [opNumber]
+    );
+    return rows[0] ?? null;
+  },
+
+  async findAll(filters?: {
+    status?: string;
+    is_completed?: boolean;
+    client?: string;
+  }) {
+    const conditions = ['1=1'];
+    const params: any[] = [];
+    let idx = 1;
+
+    if (filters?.status) {
+      conditions.push(`po.status = $${idx++}`);
+      params.push(filters.status);
+    }
+    if (filters?.is_completed !== undefined) {
+      conditions.push(`po.is_completed = $${idx++}`);
+      params.push(filters.is_completed);
+    }
+    if (filters?.client) {
+      conditions.push(`po.client ILIKE $${idx++}`);
+      params.push(`%${filters.client}%`);
+    }
+
+    const { rows } = await db.query(
+      `SELECT po.*, ps.sheet_number, f.name AS fiber_name, f2.name AS fiber2_name
+       FROM production_orders po
+       JOIN production_sheets ps ON po.sheet_id = ps.id
+       LEFT JOIN fibras f  ON po.fiber_id  = f.id
+       LEFT JOIN fibras f2 ON po.fiber2_id = f2.id
+       WHERE ${conditions.join(' AND ')}
+       ORDER BY po.priority DESC, po.sequence_order ASC NULLS LAST, po.expected_date ASC`,
+      params
+    );
     return rows;
   },
-  async create(data: Partial<ProductionOrder>, client?: PoolClient): Promise<ProductionOrder> {
+
+  async updateStatus(
+    id: string,
+    status: string,
+    currentStage: string,
+    client?: PoolClient
+  ): Promise<void> {
     const q = client ?? db;
-    const { rows } = await q.query<ProductionOrder>(
-      `INSERT INTO production_orders (sheet_id,op_number,client,color,order_number,entry_date,expected_date,material,quantity,unit,requires_lab,requires_fabric_quality,status,current_stage,responsible_user_id,description,region_jaragua,region_brusque,region_gaspar,fiber_id,is_dual_fiber,fiber2_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING *`,
-      [data.sheet_id,data.op_number,data.client,data.color,data.order_number??null,data.entry_date,data.expected_date,data.material??null,data.quantity??null,data.unit??null,data.requires_lab??false,data.requires_fabric_quality??false,data.status??'almoxarifado',data.current_stage??'almoxarifado',data.responsible_user_id??null,data.description??null,data.region_jaragua??false,data.region_brusque??false,data.region_gaspar??false,data.fiber_id??null,data.is_dual_fiber??false,data.fiber2_id??null]
+    await q.query(
+      `UPDATE production_orders
+       SET status = $1, current_stage = $2, updated_at = NOW()
+       WHERE id = $3`,
+      [status, currentStage, id]
     );
-    return rows[0];
   },
-  async updateStatus(id: string, status: string, currentStage: string, client?: PoolClient): Promise<void> {
-    const q = client ?? db;
-    await q.query('UPDATE production_orders SET status=$1,current_stage=$2 WHERE id=$3', [status, currentStage, id]);
-  },
+
   async markCompleted(id: string, client?: PoolClient): Promise<void> {
     const q = client ?? db;
-    await q.query(`UPDATE production_orders SET status='concluido',current_stage='qualidade',is_completed=TRUE WHERE id=$1`, [id]);
+    await q.query(
+      `UPDATE production_orders
+       SET is_completed = TRUE, status = 'concluido', current_stage = 'concluido', updated_at = NOW()
+       WHERE id = $1`,
+      [id]
+    );
   },
+
   async updatePriority(id: string, priority: number, priorityNotes?: string): Promise<void> {
-    await db.query('UPDATE production_orders SET priority=$1,priority_notes=$2 WHERE id=$3', [priority, priorityNotes??null, id]);
+    await db.query(
+      `UPDATE production_orders SET priority = $1, priority_notes = $2, updated_at = NOW() WHERE id = $3`,
+      [priority, priorityNotes ?? null, id]
+    );
   },
+
   async updateSequenceOrder(id: string, sequenceOrder: number): Promise<void> {
-    await db.query('UPDATE production_orders SET sequence_order=$1 WHERE id=$2', [sequenceOrder, id]);
+    await db.query(
+      `UPDATE production_orders SET sequence_order = $1, updated_at = NOW() WHERE id = $2`,
+      [sequenceOrder, id]
+    );
   },
-  async deleteBySheetId(sheetId: string, client: PoolClient): Promise<string[]> {
-    const { rows } = await client.query<{ id: string }>('SELECT id FROM production_orders WHERE sheet_id=$1', [sheetId]);
-    const ids = rows.map(r => r.id);
-    if (ids.length > 0) {
-      for (const opId of ids) {
-        for (const t of STAGE_TABLES) await client.query(`DELETE FROM ${t} WHERE op_id=$1`, [opId]);
-      }
-      await client.query('DELETE FROM production_orders WHERE sheet_id=$1', [sheetId]);
-    }
-    return ids;
-  },
-  async getLastOpNumber(client?: PoolClient): Promise<string | null> {
-    const q = client ?? db;
-    const { rows } = await q.query(`SELECT op_number FROM production_orders WHERE lot_number IS NULL ORDER BY created_at DESC,id DESC LIMIT 1`);
-    return rows[0]?.op_number ?? null;
-  },
-  async findOverdue(today: string): Promise<ProductionOrder[]> {
-    const { rows } = await db.query<ProductionOrder>(`SELECT * FROM production_orders WHERE is_completed=FALSE AND expected_date<$1 ORDER BY expected_date ASC`, [today]);
+
+  async getBoxRecords(boxNumber: string) {
+    const { rows } = await db.query(
+      `SELECT po.*, ps.sheet_number,
+              bp.employee_id, bp.has_adjustment, bp.adjustment_details,
+              bp.is_reprocess, bp.reprocess_reason, bp.processed_at
+       FROM production_orders po
+       JOIN production_sheets ps ON po.sheet_id = ps.id
+       LEFT JOIN po_box_processing bp ON po.id = bp.op_id AND bp.box_number = $1
+       WHERE po.status = $1 OR po.status = $2
+       ORDER BY po.sequence_order ASC NULLS LAST, po.expected_date ASC`,
+      [boxNumber, `${boxNumber}_done`]
+    );
     return rows;
-  },
-  async countByStatus(): Promise<Record<string,{total:number;urgent:number}>> {
-    const stages = ['preparacao','producao','secadora','destrinchagem','enrolagem','qualidade'];
-    const result: Record<string,{total:number;urgent:number}> = {};
-    for (const stage of stages) {
-      const { rows: t } = await db.query(`SELECT COUNT(*) as c FROM production_orders WHERE status=$1 AND is_completed=FALSE`, [stage]);
-      const { rows: u } = await db.query(`SELECT COUNT(*) as c FROM production_orders WHERE status=$1 AND is_completed=FALSE AND priority>=3`, [stage]);
-      result[stage] = { total: parseInt(t[0].c), urgent: parseInt(u[0].c) };
-    }
-    return result;
   },
 };
