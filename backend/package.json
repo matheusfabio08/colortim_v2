@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Colortim Production Management System - Backend",
   "main": "dist/server.js",
+  "type": "commonjs",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
@@ -38,7 +39,6 @@
     "@types/node": "^20.11.5",
     "@types/pg": "^8.10.9",
     "@types/uuid": "^9.0.7",
-    "@types/supertest": "^6.0.2",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
     "eslint": "^8.56.0",

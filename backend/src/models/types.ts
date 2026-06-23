@@ -104,29 +104,6 @@ export interface ActivityLog {
   created_at: Date;
 }
 
-export interface DashboardKPIs {
-  active_ops: number;
-  overdue_ops: number;
-  completed_today: number;
-  productivity_rate: number;
-}
-
-export interface FabricQualityInspection {
-  id: string;
-  inspection_number: string;
-  item_description: string;
-  weight: number;
-  destination_sector: string;
-  observations?: string;
-  defect_image_url?: string;
-  employee_name: string;
-  inspection_date: string;
-  priority: 'normal' | 'urgent';
-  status: 'pending' | 'in_progress' | 'completed';
-  created_at: Date;
-  updated_at: Date;
-}
-
 export interface AuthenticatedUser {
   id: string;
   username: string;
