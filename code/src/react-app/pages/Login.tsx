@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/react-app/contexts/AuthContext";
 import { Factory, LogIn, AlertCircle } from "lucide-react";
 
@@ -29,7 +29,6 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-950 via-red-900 to-red-800 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <Factory className="w-16 h-16 text-white" />
@@ -38,7 +37,6 @@ export default function Login() {
           <p className="text-white text-lg">Sistema de Gestão de Produção</p>
         </div>
 
-        {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
             <LogIn className="w-6 h-6 mr-2 text-red-900" />
@@ -54,9 +52,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Usuário
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Usuário</label>
               <input
                 type="text"
                 value={username}
@@ -69,9 +65,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Senha
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Senha</label>
               <input
                 type="password"
                 value={password}
@@ -92,9 +86,7 @@ export default function Login() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Primeiro acesso? Contate o administrador para criar sua conta.
-            </p>
+            <p className="text-sm text-gray-600">Primeiro acesso? Contate o administrador para criar sua conta.</p>
           </div>
         </div>
 

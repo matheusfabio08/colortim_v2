@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 interface User {
   id: string;
@@ -31,11 +31,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const sessionToken = localStorage.getItem("sessionToken");
       const response = await fetch("/api/auth/me", {
         credentials: "include",
-        headers: sessionToken ? { "X-Session-Token": sessionToken } : {}
+        headers: sessionToken ? { "X-Session-Token": sessionToken } : {},
       });
       if (response.ok) {
         const data = await response.json();
-        setUser(data);
+        setUser(data.user ?? data);
       }
     } catch (error) {
       console.error("Auth check failed:", error);
@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
-      credentials: "include"
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -58,7 +58,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const data = await response.json();
-    // Store session token in localStorage for Vite dev server compatibility
     if (data.sessionToken) {
       localStorage.setItem("sessionToken", data.sessionToken);
     }
@@ -66,9 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await fetch("/api/auth/logout", { 
+    await fetch("/api/auth/logout", {
       method: "POST",
-      credentials: "include"
+      credentials: "include",
     });
     localStorage.removeItem("sessionToken");
     setUser(null);
@@ -83,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;

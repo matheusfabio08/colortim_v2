@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Navigate } from "react-router";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/react-app/contexts/AuthContext";
 
 interface ProtectedRouteProps {
@@ -11,9 +11,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="animate-spin">
-          <div className="w-12 h-12 border-4 border-red-900 border-t-transparent rounded-full" />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-900 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando...</p>
         </div>
       </div>
     );
