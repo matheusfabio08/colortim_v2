@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router";
 import { AuthProvider } from "@/react-app/contexts/AuthContext";
 import LoginPage from "@/react-app/pages/Login";
 import DashboardPage from "@/react-app/pages/Dashboard";

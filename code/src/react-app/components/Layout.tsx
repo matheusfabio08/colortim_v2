@@ -1,45 +1,15 @@
 import { ReactNode, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import { useAuth } from "@/react-app/contexts/AuthContext";
 import {
-  LayoutDashboard,
-  Package,
-  FlaskConical,
-  Scale,
-  Workflow,
-  Factory,
-  Wind,
-  Split,
-  ScrollText,
-  CheckCircle,
-  Box,
-  Kanban,
-  BarChart3,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
+  LayoutDashboard, Package, FlaskConical, Scale, Workflow, Factory,
+  Wind, Split, ScrollText, CheckCircle, Box, Kanban, BarChart3,
+  Settings, LogOut, Menu, X, ChevronDown, ChevronLeft, ChevronRight,
 } from "lucide-react";
 
-interface LayoutProps {
-  children: ReactNode;
-}
-
-interface NavItem {
-  path: string;
-  icon: any;
-  label: string;
-}
-
-interface NavSection {
-  id: string;
-  icon: any;
-  label: string;
-  items: NavItem[];
-}
+interface LayoutProps { children: ReactNode; }
+interface NavItem { path: string; icon: any; label: string; }
+interface NavSection { id: string; icon: any; label: string; items: NavItem[]; }
 
 export default function Layout({ children }: LayoutProps) {
   const { user, logout } = useAuth();
@@ -50,10 +20,8 @@ export default function Layout({ children }: LayoutProps) {
 
   const toggleSection = (sectionId: string) => {
     if (isCollapsed) return;
-    setExpandedSections(prev => 
-      prev.includes(sectionId) 
-        ? prev.filter(id => id !== sectionId)
-        : [...prev, sectionId]
+    setExpandedSections(prev =>
+      prev.includes(sectionId) ? prev.filter(id => id !== sectionId) : [...prev, sectionId]
     );
   };
 
@@ -68,18 +36,14 @@ export default function Layout({ children }: LayoutProps) {
 
   const navSections: NavSection[] = [
     {
-      id: "preparacao",
-      icon: Workflow,
-      label: "Preparação",
+      id: "preparacao", icon: Workflow, label: "Preparação",
       items: [
         { path: "/preparacao", icon: Workflow, label: "Preparação" },
         { path: "/preparacao-lote", icon: Workflow, label: "Lote" },
       ]
     },
     {
-      id: "producao",
-      icon: Factory,
-      label: "Produção",
+      id: "producao", icon: Factory, label: "Produção",
       items: [
         { path: "/producao", icon: Box, label: "Box 1, 2, 3" },
         { path: "/box4", icon: Box, label: "Box 4" },
@@ -102,26 +66,18 @@ export default function Layout({ children }: LayoutProps) {
   const renderNavItem = (item: NavItem, isSubItem = false) => {
     const Icon = item.icon;
     const isActive = location.pathname === item.path;
-    
     return (
       <Link
-        key={item.path}
-        to={item.path}
+        key={item.path} to={item.path}
         onClick={() => setIsSidebarOpen(false)}
         title={isCollapsed ? item.label : undefined}
         className={`group relative flex items-center rounded-lg transition-all duration-200 ${
-          isCollapsed 
-            ? "justify-center p-1.5" 
-            : isSubItem 
-              ? "pl-10 pr-3 py-1.5 space-x-2" 
-              : "px-3 py-2 space-x-3"
+          isCollapsed ? "justify-center p-1.5" : isSubItem ? "pl-10 pr-3 py-1.5 space-x-2" : "px-3 py-2 space-x-3"
         } ${
-          isActive
-            ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-900/30"
-            : "hover:bg-red-900/60 text-red-100"
+          isActive ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-900/30" : "hover:bg-red-900/60 text-red-100"
         }`}
       >
-        {!isSubItem && <Icon className={`${isCollapsed ? "w-4 h-4" : "w-4 h-4"} flex-shrink-0`} />}
+        {!isSubItem && <Icon className="w-4 h-4 flex-shrink-0" />}
         {!isCollapsed && <span className="font-medium text-sm">{item.label}</span>}
         {isCollapsed && (
           <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-lg">
@@ -136,35 +92,24 @@ export default function Layout({ children }: LayoutProps) {
     const Icon = section.icon;
     const isExpanded = expandedSections.includes(section.id);
     const hasActiveChild = section.items.some(item => location.pathname === item.path);
-    
     if (isCollapsed) {
       return (
         <div key={section.id} className="relative group">
-          <button
-            className={`w-full flex items-center justify-center p-1.5 rounded-lg transition-all duration-200 ${
-              hasActiveChild 
-                ? "bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-900/30" 
-                : "text-red-100 hover:bg-red-900/60"
-            }`}
-          >
+          <button className={`w-full flex items-center justify-center p-1.5 rounded-lg transition-all duration-200 ${
+            hasActiveChild ? "bg-gradient-to-r from-red-600 to-red-700 text-white" : "text-red-100 hover:bg-red-900/60"
+          }`}>
             <Icon className="w-4 h-4" />
           </button>
           <div className="absolute left-full top-0 ml-2 py-2 bg-red-950 rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 min-w-40 z-50 shadow-xl border border-red-900">
-            <div className="px-3 py-1 text-xs font-semibold text-red-300 uppercase tracking-wide">
-              {section.label}
-            </div>
+            <div className="px-3 py-1 text-xs font-semibold text-red-300 uppercase tracking-wide">{section.label}</div>
             {section.items.map(item => {
               const ItemIcon = item.icon;
               const isActive = location.pathname === item.path;
               return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsSidebarOpen(false)}
+                <Link key={item.path} to={item.path} onClick={() => setIsSidebarOpen(false)}
                   className={`flex items-center space-x-2 px-3 py-2 transition-colors ${
                     isActive ? "bg-red-700 text-white" : "text-red-100 hover:bg-red-900"
-                  }`}
-                >
+                  }`}>
                   <ItemIcon className="w-4 h-4" />
                   <span className="text-sm font-medium">{item.label}</span>
                 </Link>
@@ -174,15 +119,12 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       );
     }
-    
     return (
       <div key={section.id}>
-        <button
-          onClick={() => toggleSection(section.id)}
+        <button onClick={() => toggleSection(section.id)}
           className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 ${
             hasActiveChild ? "bg-red-900/40 text-white" : "text-red-100 hover:bg-red-900/60"
-          }`}
-        >
+          }`}>
           <div className="flex items-center space-x-3">
             <Icon className="w-4 h-4" />
             <span className="font-medium text-sm">{section.label}</span>
@@ -190,9 +132,7 @@ export default function Layout({ children }: LayoutProps) {
           <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? "rotate-0" : "-rotate-90"}`} />
         </button>
         <div className={`overflow-hidden transition-all duration-200 ${isExpanded ? "max-h-40 mt-1" : "max-h-0"}`}>
-          <div className="space-y-0.5">
-            {section.items.map(item => renderNavItem(item, true))}
-          </div>
+          <div className="space-y-0.5">{section.items.map(item => renderNavItem(item, true))}</div>
         </div>
       </div>
     );
@@ -209,7 +149,6 @@ export default function Layout({ children }: LayoutProps) {
           {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
-
       <aside className={`fixed top-0 left-0 h-full bg-red-950 text-white ${sidebarWidth} transform transition-all duration-300 z-40 flex flex-col ${
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       } lg:translate-x-0 shadow-2xl`}>
@@ -225,25 +164,21 @@ export default function Layout({ children }: LayoutProps) {
                 <p className="text-red-300 text-xs mt-0.5">Gestão de Produção</p>
               </div>
             )}
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
+            <button onClick={() => setIsCollapsed(!isCollapsed)}
               className={`hidden lg:flex items-center justify-center w-7 h-7 rounded-md hover:bg-red-900/60 transition-all duration-200 text-red-300 hover:text-white ${
                 isCollapsed ? "absolute right-1 top-4" : ""
               }`}
-              title={isCollapsed ? "Expandir menu" : "Recolher menu"}
-            >
+              title={isCollapsed ? "Expandir menu" : "Recolher menu"}>
               {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </button>
           </div>
         </div>
-
-        <nav className={`flex-1 ${isCollapsed ? "overflow-hidden" : "overflow-y-auto"} ${isCollapsed ? "py-1 px-2 space-y-0.5" : "py-2 px-2 space-y-1"}`}>
+        <nav className={`flex-1 ${isCollapsed ? "overflow-hidden py-1 px-2 space-y-0.5" : "overflow-y-auto py-2 px-2 space-y-1"}`}>
           {simpleNavItems.map(item => renderNavItem(item))}
           <div className="my-2 border-t border-red-900/30" />
           {navSections.map(section => renderSection(section))}
           {bottomNavItems.map(item => renderNavItem(item))}
         </nav>
-
         <div className={`flex-shrink-0 ${isCollapsed ? "p-1.5" : "p-3"}`}>
           {!isCollapsed && (
             <div className="mb-2 px-1">
@@ -251,13 +186,10 @@ export default function Layout({ children }: LayoutProps) {
               <p className="text-sm font-medium truncate">{user?.name}</p>
             </div>
           )}
-          <button
-            onClick={logout}
-            title={isCollapsed ? "Sair" : undefined}
+          <button onClick={logout} title={isCollapsed ? "Sair" : undefined}
             className={`group relative w-full flex items-center rounded-lg hover:bg-red-900/60 transition-all duration-200 text-red-200 hover:text-white ${
               isCollapsed ? "justify-center p-1.5" : "px-3 py-2 space-x-3"
-            }`}
-          >
+            }`}>
             <LogOut className="w-4 h-4" />
             {!isCollapsed && <span className="font-medium text-sm">Sair</span>}
             {isCollapsed && (
@@ -266,12 +198,8 @@ export default function Layout({ children }: LayoutProps) {
           </button>
         </div>
       </aside>
-
-      {isSidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setIsSidebarOpen(false)} />
-      )}
-
-      <main className={`${mainMargin} pt-16 lg:pt-0 h-screen lg:h-screen transition-all duration-300 overflow-hidden`}>
+      {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setIsSidebarOpen(false)} />}
+      <main className={`${mainMargin} pt-16 lg:pt-0 h-screen transition-all duration-300 overflow-hidden`}>
         <div className="h-full p-4 md:p-6 overflow-auto">{children}</div>
       </main>
     </div>

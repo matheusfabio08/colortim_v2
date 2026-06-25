@@ -51,12 +51,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ username, password }),
       credentials: "include",
     });
-
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || "Falha no login");
     }
-
     const data = await response.json();
     if (data.sessionToken) {
       localStorage.setItem("sessionToken", data.sessionToken);
@@ -65,10 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await fetch("/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    });
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
     localStorage.removeItem("sessionToken");
     setUser(null);
   };
@@ -82,8 +77,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 }
